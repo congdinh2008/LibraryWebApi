@@ -81,6 +81,9 @@ namespace LibraryApi
                 .ForMember(dest => dest.Age, opt => opt.MapFrom(src => src.DateOfBirth.GetCurrentAge()));
 
                 cfg.CreateMap<Models.Book, Dtos.BookDto>();
+
+                cfg.CreateMap<Dtos.AuthorForCreateDto, Models.Author>();
+                cfg.CreateMap<Dtos.BookForCreateDto, Models.Book>();
             });
 
             app.UseSwagger();
