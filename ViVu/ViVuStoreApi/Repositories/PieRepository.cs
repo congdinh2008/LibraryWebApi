@@ -21,7 +21,6 @@ namespace ViVuStoreApi.Repositories
             pie.Id = Guid.NewGuid();
             _context.Pies.Add(pie);
 
-            if(pie.)
         }
     }
 }

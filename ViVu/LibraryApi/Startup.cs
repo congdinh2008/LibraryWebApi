@@ -5,6 +5,8 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using LibraryApi.Data;
+using LibraryApi.Extensions;
+using LibraryApi.Repositories;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -51,10 +53,15 @@ namespace LibraryApi
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
                 c.IncludeXmlComments(xmlPath);
             });
+
+            services.AddScoped<ILibraryRepository, LibraryRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(
+            IApplicationBuilder app,
+            IHostingEnvironment env,
+            ApplicationDbContext context)
         {
             if (env.IsDevelopment())
             {
@@ -67,6 +74,15 @@ namespace LibraryApi
 
             app.UseHttpsRedirection();
 
+            AutoMapper.Mapper.Initialize(cfg =>
+            {
+                cfg.CreateMap<Models.Author, Dtos.AuthorDto>()
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => $"{src.FirstName} {src.LastName}"))
+                .ForMember(dest => dest.Age, opt => opt.MapFrom(src => src.DateOfBirth.GetCurrentAge()));
+
+                cfg.CreateMap<Models.Book, Dtos.BookDto>();
+            });
+
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
@@ -74,6 +90,7 @@ namespace LibraryApi
                 c.RoutePrefix = string.Empty;
             });
             app.UseMvc();
+            DbInitializer.Initializer(context);
         }
     }
 }
