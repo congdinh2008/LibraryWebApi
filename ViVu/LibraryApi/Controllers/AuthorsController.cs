@@ -23,12 +23,13 @@ namespace LibraryApi.Controllers
         public IActionResult GetAuthors()
         {
             var authorsFromRepo = _libraryRepository.GetAuthors();
+
             var authors = Mapper.Map<IEnumerable<AuthorDto>>(authorsFromRepo);
 
             return Ok(authors);
         }
 
-        [HttpGet("{id}", Name =("GetAuthor"))]
+        [HttpGet("{id}", Name = ("GetAuthor"))]
         public IActionResult GetAuthor(Guid id)
         {
             var authorFromRepo = _libraryRepository.GetAuthor(id);
@@ -56,7 +57,7 @@ namespace LibraryApi.Controllers
 
             var authorToReturn = Mapper.Map<AuthorDto>(authorModel);
 
-            return CreatedAtRoute("GetAuthor", 
+            return CreatedAtRoute("GetAuthor",
                 new { id = authorToReturn.Id }, authorToReturn);
         }
 

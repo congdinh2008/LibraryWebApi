@@ -84,6 +84,9 @@ namespace LibraryApi
 
                 cfg.CreateMap<Dtos.AuthorForCreateDto, Models.Author>();
                 cfg.CreateMap<Dtos.BookForCreateDto, Models.Book>();
+
+                cfg.CreateMap<Dtos.BookForUpdateDto, Models.Book>();
+                cfg.CreateMap<Models.Book, Dtos.BookForUpdateDto>();
             });
 
             app.UseSwagger();
