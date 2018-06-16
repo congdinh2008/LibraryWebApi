@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using LibraryApi.Extensions;
 using LibraryApi.Models;
 
 namespace LibraryApi.Repositories
@@ -12,7 +13,7 @@ namespace LibraryApi.Repositories
         void DeleteAuthor(Author author);
         void DeleteBook(Book book);
         Author GetAuthor(Guid authorId);
-        IEnumerable<Author> GetAuthors();
+        PagedList<Author> GetAuthors(AuthorsResourceParameters authorsResourceParameters);
         IEnumerable<Author> GetAuthors(IEnumerable<Guid> authorIds);
         Book GetBookForAuthor(Guid bookId, Guid authorId);
         IEnumerable<Book> GetBooksForAuthor(Guid authorId);
