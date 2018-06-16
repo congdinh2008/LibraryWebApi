@@ -1,22 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Threading.Tasks;
-using LibraryApi.Data;
+﻿using LibraryApi.Data;
 using LibraryApi.Extensions;
 using LibraryApi.Repositories;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.Swagger;
+using System;
+using System.IO;
+using System.Reflection;
 
 namespace LibraryApi
 {
@@ -61,7 +58,8 @@ namespace LibraryApi
         public void Configure(
             IApplicationBuilder app,
             IHostingEnvironment env,
-            ApplicationDbContext context)
+            ApplicationDbContext dbContext,
+            ILoggerFactory loggerFactory)
         {
             if (env.IsDevelopment())
             {
@@ -69,7 +67,23 @@ namespace LibraryApi
             }
             else
             {
-                app.UseHsts();
+                app.UseExceptionHandler(appBuilder =>
+                {
+                    appBuilder.Run(async context =>
+                    {
+                        var exceptionHandlerFeature = context.Features.Get<IExceptionHandlerFeature>();
+                        if (exceptionHandlerFeature != null)
+                        {
+                            var logger = loggerFactory.CreateLogger("Global exception logger");
+                            logger.LogError(500, 
+                                exceptionHandlerFeature.Error,
+                                exceptionHandlerFeature.Error.Message);
+                        }
+
+                        context.Response.StatusCode = 500;
+                        await context.Response.WriteAsync("An unexpected fault happened. Try again later.");
+                    });
+                });
             }
 
             app.UseHttpsRedirection();
@@ -96,7 +110,7 @@ namespace LibraryApi
                 c.RoutePrefix = string.Empty;
             });
             app.UseMvc();
-            DbInitializer.Initializer(context);
+            DbInitializer.Initializer(dbContext);
         }
     }
 }

@@ -4,6 +4,7 @@ using LibraryApi.Models;
 using LibraryApi.Repositories;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 
@@ -13,10 +14,13 @@ namespace LibraryApi.Controllers
     public class BooksController : ControllerBase
     {
         private readonly ILibraryRepository _libraryRepository;
+        private readonly ILogger<BooksController> _logger;
 
-        public BooksController(ILibraryRepository libraryRepository)
+        public BooksController(ILibraryRepository libraryRepository,
+            ILogger<BooksController> logger)
         {
             _libraryRepository = libraryRepository;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -50,12 +54,12 @@ namespace LibraryApi.Controllers
 
         [HttpPost]
         public IActionResult CreateBookForAuthor(Guid authorId,
-            [FromBody] BookForCreateDto bookForCreateDto)
+            [FromBody] BookForCreateDto book)
         {
-            if (bookForCreateDto == null)
+            if (book == null)
                 return BadRequest();
 
-            if (bookForCreateDto.Description == bookForCreateDto.Title)
+            if (book.Description == book.Title)
                 ModelState.AddModelError(nameof(BookForCreateDto),
                     "The provided description should be different from the title.");
 
@@ -65,7 +69,7 @@ namespace LibraryApi.Controllers
             if (!_libraryRepository.AuthorExists(authorId))
                 return NotFound();
 
-            var bookModel = Mapper.Map<Book>(bookForCreateDto);
+            var bookModel = Mapper.Map<Book>(book);
             _libraryRepository.AddBookForAuthor(authorId, bookModel);
 
             if (!_libraryRepository.Save())
@@ -91,6 +95,8 @@ namespace LibraryApi.Controllers
             _libraryRepository.DeleteBook(bookForAuthorFromRepo);
             if (!_libraryRepository.Save())
                 throw new Exception($"Deleting book {id} for author {authorId} failed on save.");
+
+            _logger.LogInformation(100, $"Book {id} for author {authorId} was deleted.");
 
             return NoContent();
         }
@@ -136,7 +142,7 @@ namespace LibraryApi.Controllers
             _libraryRepository.UpdateBookForAuthor(bookForAuthorFromRepo);
 
             if (!_libraryRepository.Save())
-                throw new Exception($"Upserting book {id} for author {authorId} failed on save.");
+                throw new Exception($"Updating book {id} for author {authorId} failed on save.");
 
             return NoContent();
         }
