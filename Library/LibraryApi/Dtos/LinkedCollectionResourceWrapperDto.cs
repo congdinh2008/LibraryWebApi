@@ -2,7 +2,8 @@
 
 namespace LibraryApi.Dtos
 {
-    public class LinkedCollectionResourceWrapperDto<T> : LinkedResourceBaseDto where T : LinkedResourceBaseDto
+    public class LinkedCollectionResourceWrapperDto<T> : 
+        LinkedResourceBaseDto where T : LinkedResourceBaseDto
     {
         public LinkedCollectionResourceWrapperDto(IEnumerable<T> value)
         {

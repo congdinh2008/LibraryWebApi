@@ -105,6 +105,7 @@ namespace LibraryApi.Controllers
                 return NotFound();
 
             _libraryRepository.DeleteBook(bookForAuthorFromRepo);
+
             if (!_libraryRepository.Save())
                 throw new Exception($"Deleting book {id} for author {authorId} failed on save.");
 

@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using Library.Api.Dtos;
+using Library.Api.Extensions;
 using LibraryApi.Dtos;
 using LibraryApi.Extensions;
 using LibraryApi.Models;
@@ -182,7 +184,10 @@ namespace LibraryApi.Controllers
         }
 
         [HttpPost(Name = "CreateAuthor")]
-        public IActionResult CreateAuthor([FromBody] AuthorForCreateDto authorForCreateDto)
+        [RequestHeaderMatchesMediaType("Content-Type",
+            new[] { "application/vnd.vivustore.author.full+json" })]
+        public IActionResult CreateAuthor(
+            [FromBody] AuthorForCreateDto authorForCreateDto)
         {
             if (authorForCreateDto == null)
                 return BadRequest();
@@ -193,6 +198,42 @@ namespace LibraryApi.Controllers
 
             if (!_libraryRepository.Save())
                 throw new Exception("Creating an author failed on save.");
+
+            var authorToReturn = Mapper.Map<AuthorDto>(authorModel);
+
+            var links = CreateLinksForAuthor(authorToReturn.Id, null);
+
+            var linkedResourceToReturn = authorToReturn.ShapeData(null)
+                as IDictionary<string, object>;
+
+            linkedResourceToReturn.Add("links", links);
+
+            return CreatedAtRoute("GetAuthor",
+                new { id = linkedResourceToReturn["Id"] },
+                linkedResourceToReturn);
+        }
+
+        [HttpPost(Name = "CreateAuthorWithDateOfDeath")]
+        [RequestHeaderMatchesMediaType("Content-Type",
+            new[] { "application/vnd.vivustore.authorwithdateofdeath.full+json",
+                    "application/vnd.vivustore.authorwithdateofdeath.full+xml" })]
+        public IActionResult CreateAuthorWithDateOfDeath(
+            [FromBody] AuthorForCreationWithDateOfDeathDto author)
+        {
+            if (author == null)
+            {
+                return BadRequest();
+            }
+
+            var authorModel = Mapper.Map<Author>(author);
+
+            _libraryRepository.AddAuthor(authorModel);
+
+            if (!_libraryRepository.Save())
+            {
+                throw new Exception("Creating an author failed on save.");
+                // return StatusCode(500, "A problem happened with handling your request.");
+            }
 
             var authorToReturn = Mapper.Map<AuthorDto>(authorModel);
 
@@ -261,6 +302,11 @@ namespace LibraryApi.Controllers
                     "create_book_for_author",
                     "POST"));
 
+            links.Add(
+               new LinkDto(_urlHelper.Link("GetBooksForAuthor", new { authorId = id }),
+               "books",
+               "GET"));
+
             return links;
         }
 
@@ -295,6 +341,13 @@ namespace LibraryApi.Controllers
                     "GET"));
 
             return links;
+        }
+
+        [HttpOptions]
+        public IActionResult GetAuthorsOptions()
+        {
+            Response.Headers.Add("Allow", "GET,OPTIONS,POST");
+            return Ok();
         }
     }
 }
